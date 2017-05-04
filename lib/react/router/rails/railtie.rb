@@ -35,7 +35,7 @@ module React
 
           do_setup.call
 
-          ActionDispatch::Reloader.to_prepare(&do_setup)
+          ActiveSupport::Reloader.to_prepare(&do_setup)
         end
       end
     end
