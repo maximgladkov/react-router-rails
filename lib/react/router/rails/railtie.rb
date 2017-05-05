@@ -3,14 +3,26 @@ require 'rails'
 module React
   module Router
     module Rails
+      def self.get_asset_content(asset_name)
+        if ::Rails.application.config.assets.compile
+          ::Rails.application.assets[asset_name].to_s
+        else
+          manifest = ::Rails.application.assets_manifest
+          # Find the corresponding compiled file:
+          asset_path = manifest.assets[asset_name] || raise("No compiled asset for #{asset_name}, was it precompiled?")
+          asset_full_path = ::Rails.root.join("public", manifest.directory, asset_path)
+          File.read(asset_full_path)
+        end
+      end
+      
       class Railtie < ::Rails::Railtie
         config.react_router = ActiveSupport::OrderedOptions.new
 
         config.react_router.max_renderers = 10
         config.react_router.timeout = 20 # seconds
-        config.react_router.react_js = lambda { File.read(::Rails.application.assets.resolve('react.js')) }
-        config.react_router.react_server_js = lambda { File.read(::Rails.application.assets.resolve('react-server.js')) }
-        config.react_router.react_router_js = lambda { File.read(::Rails.application.assets.resolve('react_router.js')) }
+        config.react_router.react_js = lambda { React::Router::Rails.get_asset_content('react.js') }
+        config.react_router.react_server_js = lambda { React::Router::Rails.get_asset_content('react-server.js') }
+        config.react_router.react_router_js = lambda { React::Router::Rails.get_asset_content('react_router.js') }
         config.react_router.route_filenames = ['components.js']
 
         # Include the react-router-rails view helper lazily
